@@ -71,7 +71,7 @@ def build_numpyAPI_query(funlist=['abs'], content_table = '[bigquery-public-data
     qlist=[]
     source_name = 'c.content'
     for f in funlist:
-        qlist.append(f'REGEXP_MATCH( {source_name},' + r"r'"+  f'numpy_{f}\\(' + r"\s?[A-Za-z0-9_]+\s?[.,/)]') AS " + f'numpy_{f}')
+        qlist.append(f'REGEXP_MATCH( {source_name},' + r"r'"+  f'{f}\\(' + r"\s?[A-Za-z0-9_]+\s?[.,/)]') AS " + f'numpy_{f}')
     return '\n'.join(['SELECT',',\n'.join(qlist),f'FROM {content_table}'])
 
 def build_countAPIs(api_table='None',funlist=['abs','pow']):
