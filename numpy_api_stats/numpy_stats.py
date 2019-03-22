@@ -67,7 +67,7 @@ def get_numpyAPI_function_list(client):
     df = query_job.result().to_dataframe()
     return [r[1][0] for r in df.iterrows()]
       
-def build_numpyAPI_query(funlist=['abs'], content_table = '[bigquery-public-data:github_repos.content]'):
+def build_numpyAPI_query(funlist=['abs'], content_table = '[bigquery-public-data:github_repos.sample_content]'):
     qlist=[]
     source_name = 'c.content'
     for f in funlist:
