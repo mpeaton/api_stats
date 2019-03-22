@@ -67,15 +67,15 @@ def get_numpyAPI_function_list(client):
     df = query_job.result().to_dataframe()
     return [r[1][0] for r in df.iterrows()]
       
-def build_numpyAPI_query(funlist=['abs'], content_table = '[bigquery-public-data:github_repos.commits]'):
+def build_numpyAPI_query(funlist=['abs'], content_table = '[bigquery-public-data:github_repos.content]'):
     qlist=[]
-    source_name = 'commit'
-    for r in funlist:
-        qlist.append(f'REGEXP_MATCH( {source_name},' + r"r'"+  f'{r}(' + r"\s?[A-Za-z0-9_]+\s?[.,/)]') AS " + f'{r}')
+    source_name = 'c.content'
+    for f in funlist:
+        qlist.append(f'REGEXP_MATCH( {source_name},' + r"r'"+  f'numpy_{f}\\(' + r"\s?[A-Za-z0-9_]+\s?[.,/)]') AS " + f'numpy_{f}')
     return '\n'.join(['SELECT',',\n'.join(qlist),f'FROM {content_table}'])
 
 def build_countAPIs(api_table='None',funlist=['abs','pow']):
-    return 'SELECT\n'+',\n'.join([f'count(CASE WHEN {f} THEN 1 END) AS {f}_count' for f in funlist]) + f'\nFROM {api_table}'
+    return 'SELECT\n'+',\n'.join([f'count(CASE WHEN numpy_{f} THEN 1 END) AS numpy_{f}_count' for f in funlist]) + f'\nFROM {api_table}'
 
 if __name__ == '__main__':
    
