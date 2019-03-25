@@ -4,7 +4,7 @@ funs = ['abs', 'absolute', 'absolute_import', 'add', 'add_docstring', 'add_newdo
 
 def get_funs():
     return funs
-    
+
 def run_legacy_query(query):
 
     client = bigquery.Client()
@@ -62,19 +62,19 @@ def nest_table(t):
 def build_py_content(content_table_name='[bigquery-public-data:github_repos.sample_contents]',join=''):
     return '\n'.join(['SELECT','*','FROM',content_table_name + ' AS c',join])
 
-def join_py():
-    return '\n'.join(['INNER JOIN',nest_table(build_py_query())+' AS p','ON','c.id = p.id'])
+def join_py(file_table = '[bigquery-public-data:github_repos.sample_files]'):
+    return '\n'.join(['INNER JOIN',nest_table(build_py_query(file_table = file_table))+' AS p','ON','c.id = p.id'])
 
 def get_numpyAPI_function_list(client):
     query_job = client.query( build_getAPItable_query() )  # API request
     df = query_job.result().to_dataframe()
     return [r[1][0] for r in df.iterrows()]
       
-def build_numpyAPI_query(funlist=['abs'], content_table = '[bigquery-public-data:github_repos.sample_content]'):
+def build_numpyAPI_query(funlist=['abs'], content_table = '[bigquery-public-data:github_repos.sample_contents]'):
     qlist=[]
     source_name = 'c.content'
     for f in funlist:
-        qlist.append(f'REGEXP_MATCH( {source_name},' + r"r'"+  f'{f}\\(' + r"\s?[A-Za-z0-9_]+\s?[.,/)]') AS " + f'numpy_{f}')
+        qlist.append(f'REGEXP_MATCH( {source_name},' + r"r'"+  f'(np\.|numpy\.){f}\\(' + r"\s?[A-Za-z0-9_.\(\)]*\s?\)') AS " + f'numpy_{f}')
     return '\n'.join(['SELECT',',\n'.join(qlist),f'FROM {content_table}'])
 
 def build_countAPIs(api_table='None',funlist=['abs','pow']):
@@ -85,8 +85,14 @@ if __name__ == '__main__':
     import os 
     os.environ['GOOGLE_APPLICATION_CREDENTIALS']='/Users/mpeaton/Downloads/apt-footing-235018-aeb185ac9e31.json' 
     
-    query = build_countAPIs(funlist=funs,api_table=nest_table(build_numpyAPI_query(funlist=funs,content_table = nest_table(build_py_content(join=join_py())))))
-    print(query)
+    query = build_countAPIs(funlist=funs,api_table=
+                            nest_table(
+                                build_numpyAPI_query(
+                                    funlist=funs,content_table = nest_table(
+                                        build_py_content(content_table_name='[bigquery-public-data:github_repos.contents]',
+                                                        join=join_py(file_table = '[bigquery-public-data:github_repos.files]'))
+                                    ))))    
+
     with open('numpy_api_count.sql', 'w') as f: 
         f.write(query) 
 
