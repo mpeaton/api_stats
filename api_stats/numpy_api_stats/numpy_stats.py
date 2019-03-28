@@ -1,35 +1,47 @@
 from google.cloud import bigquery
 import numpy as np
 from pandas import read_csv as pd_read_csv
+from pandas import DataFrame
 
+def select(api,ttype):
+        if ttype=='function':
+            return [(x[0],x[1].__name__) for x in api if x[1] is type(lambda x: x)]
+        elif ttype=='module':
+            return  [ (x[0],x[1].__name__) for x in api if x[1] is type(np.char)]
+        elif ttype=='int':
+            return  [ (x[0],x[1].__name__) for x in api if x[1] is type(np.CLIP)] 
+        elif ttype=='float':
+            return  [ (x[0],x[1].__name__) for x in api if x[1] is type(np.e)]
+        elif ttype=='ufunc':
+            return  [ (x[0],x[1].__name__) for x in api if x[1] is type(np.add)]
 
-def discover_funs(api):
-        return [x for x in api if x[1] is type(lambda x: x)]
+def build_api_list(api,typelist=['module','float','function','int','ufunc']):
+    
 
-def discover_mods(api):
-        return  [ x for x in api if x[1] is type(np.char)]
+    api_list = [(x[0],x[1].__name__) for x in api]
+    df_api = DataFrame(api_list,columns = ['label','type'])
+
+    df_api.set_index('type',inplace=True)
+
+    df_api_list = df_api.loc[typelist].reset_index()
+    return [ (r[1].label,r[1].type) for r in df_api_list.iterrows()]
 
 class API_QUERY_FACTORY:
-    def __init__(self,api=None,funs=None,mods=None,content_table=None,file_table=None):
-        if api: self.api = api
-        else:  NotImplemented 
-            #self.api = [(x, type(np.__getattribute__(x))) for x in dir(np) if not x.startswith('__')]
-
-        if funs:
-            self.funs = funs
-        else: self.funs = discover_funs(self.api)
-
-        if mods:
-            self.mods = mods
-        else: self.mods = discover_mods(self.api)
+    _typelist = ['module','function','float','int','ufunc']
+    def __init__(self,api,typelist=None,content_table=None,file_table=None):
+        self.api = api
+        #self.api = [(x, type(np.__getattribute__(x))) for x in dir(np) if not x.startswith('__')]
         
+        if  typelist: self._typelist=typelist
+        else: typelist=self._typelist
+
+        api_list = build_api_list(api,typelist)
+
         if content_table: self.content_table=content_table
         else: self.content_table = '[bigquery-public-data:github_repos.contents]'
 
         if file_table: self.file_table=file_table
         else: self.file_table = '[bigquery-public-data:github_repos.files]'
-
-        api_list = self.funs + self.mods
 
         self.query =  build_numpyAPI_query(
                                     api_list,content_table = nest_table(
@@ -166,21 +178,41 @@ def detect_fun(f):
 def detect_mod(m):
     return f'(import\s+numpy\.|from numpy\.{m}\s+'+'import\s+[a-zA-Z0-9_]+)'
 
+def detect_float(f):
+    return  f'(np\.|numpy\.){f}\s*[\*\+\-\/]?'
+
+def detect_int(f):
+    return  f'(np\.|numpy\.){f}'
+
+def detect_ufunc(f):
+    return f'(np\.|numpy\.){f}\(\s?[A-Za-z0-9_.\(\)]*\s?\)'
+
 def build_cname(name,ttype):
     return '_'.join(['numpy',ttype,name])
 
 def build_sql_regex(name,ttype, source_name = 'c.content'):
     if ttype=='function':
-        return f'REGEXP_MATCH( {source_name},{detect_fun(name)} ) AS {build_cname(name,ttype)}' 
+        return f'REGEXP_MATCH( {source_name},\'{detect_fun(name)}\' ) AS {build_cname(name,ttype)}' 
     
-    if ttype=='module':
-        return f'REGEXP_MATCH( {source_name},{detect_mod(name)} ) AS {build_cname(name,ttype)}'
+    elif ttype=='module':
+        return f'REGEXP_MATCH({source_name},\'{detect_mod(name)}\' ) AS {build_cname(name,ttype)}'
+    
+    elif ttype=='float':
+        return f'REGEXP_MATCH({source_name},\'{detect_float(name)}\' ) AS {build_cname(name,ttype)}'
+    
+    elif ttype=='int':
+        return f'REGEXP_MATCH({source_name},\'{detect_int(name)}\' ) AS {build_cname(name,ttype)}'
+
+    elif ttype=='ufunc':
+        return f'REGEXP_MATCH({source_name},\'{detect_ufunc(name)}\' ) AS {build_cname(name,ttype)}'
+    else:
+        raise NotImplementedError 
 
 def build_numpyAPI_query(api_list, content_table = '[bigquery-public-data:github_repos.sample_contents]'):
     qlist=[]
     source_name = 'c.content'
     for f in api_list:
-        qlist.append(build_sql_regex(f[0],f[1].__name__))
+        qlist.append(build_sql_regex(f[0],f[1]))
     
     return '\n'.join(['SELECT',',\n'.join(qlist),f'FROM {content_table}'])
 
@@ -200,9 +232,11 @@ def build_countAPIs(api_list,api_table='None'):
 if __name__ == '__main__':
    
     import os 
+
     os.environ['GOOGLE_APPLICATION_CREDENTIALS']='/Users/mpeaton/Downloads/apt-footing-235018-aeb185ac9e31.json' 
+    api = [(x, type(np.__getattribute__(x))) for x in dir(np) if not x.startswith('__')] 
     
-    apq = API_QUERY_FACTORY()
+    apq = API_QUERY_FACTORY(api)
     query = apq.query
     # query = build_countAPIs(funlist=apq.funs,api_table=
     #                         nest_table(
@@ -211,7 +245,7 @@ if __name__ == '__main__':
     #                                     build_py_content(content_table_name='[bigquery-public-data:github_repos.contents]',
     #                                                     join=join_py(file_table = '[bigquery-public-data:github_repos.files]'))
     #                                 ))))    
-
-    with open('numpy_api_count.sql', 'w') as f: 
+    
+    with open('numpy_api_search.sql', 'w') as f: 
         f.write(query) 
 
