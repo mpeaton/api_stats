@@ -1,6 +1,6 @@
 import re
 import pytest
-from api_stats.numpy_api_stats.numpy_stats import detect_fun,detect_mod,detect_float,detect_int,detect_ufunc
+from numpy_api_stats.numpy_stats import detect_fun,detect_mod,detect_float,detect_int,detect_ufunc,detect_type
 
 @pytest.mark.parametrize('m,s',[('linalg','from numpy.linalg import svd'),('linalg','import numpy.linalg as')])
 def test_mod(m,s):
@@ -20,6 +20,10 @@ def test_float(f,s):
 def test_int(f,s):
     assert(re.search(detect_int(f),s))
 
-@pytest.mark.parametrize('f,s',[('add','np.add(something,something_else')])
+@pytest.mark.parametrize('f,s',[('add','np.add(something,something_else)')])
 def test_ufunc(f,s):
     assert(re.search(detect_ufunc(f),s))
+
+@pytest.mark.parametrize('f,s',[('int8',' { this:np.int8}')])
+def test_type(f,s):
+    assert(re.search(detect_type(f),s))

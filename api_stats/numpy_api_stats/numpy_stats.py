@@ -14,8 +14,14 @@ def select(api,ttype):
             return  [ (x[0],x[1].__name__) for x in api if x[1] is type(np.e)]
         elif ttype=='ufunc':
             return  [ (x[0],x[1].__name__) for x in api if x[1] is type(np.add)]
+        elif ttype=='builtin_function_or_method':
+            return  [ (x[0],x[1].__name__) for x in api if x[1] is type(np.array)]
+        elif ttype=='type':
+            return  [ (x[0],x[1].__name__) for x in api if x[1] is type(np.int8)] 
+        else:
+            return NotImplementedError
 
-def build_api_list(api,typelist=['module','float','function','int','ufunc']):
+def build_api_list(api,typelist=['ufunc']):
     
 
     api_list = [(x[0],x[1].__name__) for x in api]
@@ -27,15 +33,24 @@ def build_api_list(api,typelist=['module','float','function','int','ufunc']):
     return [ (r[1].label,r[1].type) for r in df_api_list.iterrows()]
 
 class API_QUERY_FACTORY:
-    _typelist = ['module','function','float','int','ufunc']
-    def __init__(self,api,typelist=None,content_table=None,file_table=None):
-        self.api = api
-        #self.api = [(x, type(np.__getattribute__(x))) for x in dir(np) if not x.startswith('__')]
+    
+    _typelist = ['module','function','float','int','ufunc','builtin_function_or_method',
+    'type','CClass','NoneType','PytestTester','RClass','bool','IndexExpression','_typedict',
+    'str','nd_grid','_Feature','float','dict']
+    _api = [(x, type(np.__getattribute__(x))) for x in dir(np) if not x.startswith('__')] 
+   
+    def __init__(self,api=None,api_list=None,typelist=None,content_table=None,file_table=None):
+        
+        if api: self._api = api
+        else: api = self._api 
         
         if  typelist: self._typelist=typelist
         else: typelist=self._typelist
-
-        api_list = build_api_list(api,typelist)
+        
+        if api_list:
+            self.api_list=api_list
+        else:
+            api_list = build_api_list(api,typelist)
 
         if content_table: self.content_table=content_table
         else: self.content_table = '[bigquery-public-data:github_repos.contents]'
@@ -43,16 +58,11 @@ class API_QUERY_FACTORY:
         if file_table: self.file_table=file_table
         else: self.file_table = '[bigquery-public-data:github_repos.files]'
 
-        self.query =  build_numpyAPI_query(
-                                    api_list,content_table = nest_table(
-                                        build_py_content(content_table_name=self.content_table,
-                                                        join=join_py(file_table = self.file_table))
-                                    )) 
+        self.query =  build_numpyAPI_query( api_list, content_table = nest_table(
+                        build_py_content(content_table_name=self.content_table,
+                        join=join_py(file_table = self.file_table))
+                                     )) 
 
-    
-# def find_types(l):
-#     ''' find the types of some list of names/labels '''
-#     return [(x,type( np.__getattribute__(x))) for x in l ]
 
 def groupby(x):
     y = {}
@@ -179,15 +189,37 @@ def detect_mod(m):
     return f'(import\s+numpy\.|from numpy\.{m}\s+'+'import\s+[a-zA-Z0-9_]+)'
 
 def detect_float(f):
+    # if f.lower()=='nan':
+    #     return f'(np\.|numpy\.(nan|NaN|NAN)'
+    # elif f.lower()=='inf':
+    #     return f'(np\.|numpy\.(Inf|inf)'
+    # else:
     return  f'(np\.|numpy\.){f}\s*[\*\+\-\/]?'
 
 def detect_int(f):
     return  f'(np\.|numpy\.){f}'
 
 def detect_ufunc(f):
-    return f'(np\.|numpy\.){f}\(\s?[A-Za-z0-9_.\(\)]*\s?\)'
+    return f'(np\.|numpy\.){f}\(\s?[A-Za-z0-9_.,\(\)]*\s?\)'
+
+def detect_builtin(f):
+    return f'(np\.|numpy\.){f}\(\s?[A-Za-z0-9_.\(\){{}}\[\]]*\s?\)'
+
+def detect_type(f):
+    return f'(np\.|numpy\.){f}[\s\)\]}}\+\-\/\*]+'
+
+def detect_misc(f):
+    if f=='c_':
+        return f'(np\.|numpy\.)c_\.(axis|concatenate\(|makemat\(|matrix|ndmin|trans1d]'
+    if f=='newaxis':
+        return f'(np\.|numpy\.)newaxis'
 
 def build_cname(name,ttype):
+    if name=='NaN': name='nan1'
+    elif name=='NAN':name='nan2'
+    elif name=='nan':name='nan3'
+    elif name=='Inf':name='inf1'
+    elif name=='inf':name='inf2'
     return '_'.join(['numpy',ttype,name])
 
 def build_sql_regex(name,ttype, source_name = 'c.content'):
@@ -198,6 +230,7 @@ def build_sql_regex(name,ttype, source_name = 'c.content'):
         return f'REGEXP_MATCH({source_name},\'{detect_mod(name)}\' ) AS {build_cname(name,ttype)}'
     
     elif ttype=='float':
+       # if name.lower()=='nan':import pdb;pdb.set_trace()
         return f'REGEXP_MATCH({source_name},\'{detect_float(name)}\' ) AS {build_cname(name,ttype)}'
     
     elif ttype=='int':
@@ -205,6 +238,16 @@ def build_sql_regex(name,ttype, source_name = 'c.content'):
 
     elif ttype=='ufunc':
         return f'REGEXP_MATCH({source_name},\'{detect_ufunc(name)}\' ) AS {build_cname(name,ttype)}'
+    
+    elif ttype=='builtin_function_or_method':
+        return f'REGEXP_MATCH({source_name},\'{detect_builtin(name)}\' ) AS {build_cname(name,ttype)}' 
+    
+    elif ttype=='type':
+        return f'REGEXP_MATCH({source_name},\'{detect_type(name)}\' ) AS {build_cname(name,ttype)}' 
+    
+    elif ttype in ['c_','newaxis']:
+        return f'REGEXP_MATCH({source_name},\'{detect_misc(name)}\' ) AS {build_cname(name,ttype)}'  
+    
     else:
         raise NotImplementedError 
 
@@ -216,15 +259,6 @@ def build_numpyAPI_query(api_list, content_table = '[bigquery-public-data:github
     
     return '\n'.join(['SELECT',',\n'.join(qlist),f'FROM {content_table}'])
 
-# def build_numpyAPI_query(funlist=['abs'],modlist=['linalg'], content_table = '[bigquery-public-data:github_repos.sample_contents]'):
-#     qlist=[]
-#     source_name = 'c.content'
-#     for f in funlist:
-#         qlist.append(f'REGEXP_MATCH( {source_name},' + r"r'"+  f'(np\.|numpy\.){f}\\(' + r"\s?[A-Za-z0-9_.\(\)]*\s?\)') AS " + f'numpy_{f}')
-#     for m in modlist:
-#         qlist.append(f'REGEXP_MATCH( {source_name},' + r"r'"+ f'(import numpy\.|from numpy\.){m}'+'import\s+'+') AS ' + f'numpy_{f}')
-
-#     return '\n'.join(['SELECT',',\n'.join(qlist),f'FROM {content_table}'])
 
 def build_countAPIs(api_list,api_table='None'):
     return 'SELECT\n'+',\n'.join([f'count(CASE WHEN numpy_{f} THEN 1 END) AS {f}_count' for f in api_list]) + f'\nFROM {api_table}'
@@ -247,5 +281,6 @@ if __name__ == '__main__':
     #                                 ))))    
     
     with open('numpy_api_search.sql', 'w') as f: 
+        f.write('#legacySQL\n')
         f.write(query) 
 
