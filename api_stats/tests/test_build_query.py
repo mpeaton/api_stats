@@ -9,7 +9,7 @@ _typelist = ['module','function','float','int','ufunc','builtin_function_or_meth
 _api = [(x, type(np.__getattribute__(x))) for x in dir(np) if not x.startswith('__')] 
 
 
-@pytest.mark.parametrize('l',[(['module']),(['module','type'])])
+@pytest.mark.parametrize('l',[([tt]) for tt in _typelist ])
 def test_build_query(l):
     api_list = build_api_list( _api , l )
     q = build_numpyAPI_query(api_list)

@@ -37,6 +37,7 @@ class API_QUERY_FACTORY:
     _typelist = ['module','function','float','int','ufunc','builtin_function_or_method',
     'type','CClass','NoneType','PytestTester','RClass','bool','IndexExpression','_typedict',
     'str','nd_grid','_Feature','float','dict']
+    
     _api = [(x, type(np.__getattribute__(x))) for x in dir(np) if not x.startswith('__')] 
    
     def __init__(self,api=None,api_list=None,typelist=None,content_table=None,file_table=None):
@@ -210,9 +211,50 @@ def detect_type(f):
 
 def detect_misc(f):
     if f=='c_':
-        return f'(np\.|numpy\.)c_\.(axis|concatenate\(|makemat\(|matrix|ndmin|trans1d]'
-    if f=='newaxis':
-        return f'(np\.|numpy\.)newaxis'
+        return r'(np\.|numpy\.)c_\.(axis|concatenate\(|makemat\(|matrix|ndmin|trans1d]'
+    elif f=='newaxis':
+        return r'(np\.|numpy\.)newaxis'
+    elif f=='test':
+        return r'(np\.|numpy\.)test\('
+    elif f=='r_':
+        return r'(np\.|numpy\.)r_\.(axis|concatenate\(|makemat\(|matrix|ndmin|trans1d]'
+    elif f=='little_endian':
+        return r'(from\s+numpy\s+import\s+little_endian|(numpy\.|np\.)little_endian)'
+    elif f in ['s_','index_expr']:
+        return f'(np\.|numpy\.){f}(\.\(maketuple|\[\s?[0-9]?:[0-9]?:?[0-9]?\])'
+    elif f in ['cast']:
+        return f'(np\.|numpy\.){f}'
+    elif f=='nbytes':
+        bstring='|'.join([ x.__name__ for x in np.nbytes.keys() ])  
+        return f'(np\.|numpy\.)nbytes\[\s?({bstring})\s?\]'
+    elif f in ['numarray','oldnumeric']:
+        return f'(np\.|numpy\.){f}'
+    elif f in ['mgrid','ogrid']:
+        return f'(np\.|numpy\.){f}\[\s?[0-9]\s?:\s?[0-9]\s?,\s?[0-9]\s?:\s?[0-9]\s?\]'
+    elif f in ['print_function','absolute_import','division']:
+        return f'(np\.|numpy\.){f}'
+    elif f=='sctypeDict':
+        tstring='|'.join([ str(x) if type(x) is int else f'\'{x}\'' for x in np.sctypeDict.keys() ])
+        return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]' 
+    elif f=='sctypes': 
+        tstring='|'.join([ f'\'{x}\'' for x in np.sctypes.keys()])
+        return f'(np\.|numpy\.){f}\[\s?({tstring})\s?\]'
+    elif f=='typeDict': 
+        tstring='|'.join([ str(x) if type(x) is int else f'\'{x}\'' for x in np.typeDict.keys() ])
+        return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]'  
+    elif f=='typecodes':
+        tstring='|'.join([ f'\'{x}\'' for x in np.typecodes.keys()])
+        return f'(np\.|numpy\.){f}\[\s?({tstring})\s?\]' 
+    elif f=='sctypeNA': 
+        tstring='|'.join([ f'\'{x}\'' if type(x) is str else f'(np\.|numpy\.){x.__name__}' for x in np.sctypeNA.keys()])
+        return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]' 
+    elif f=='typeNA': 
+        tstring='|'.join([ f'\'{x}\'' if type(x) is str else f'(np\.|numpy\.){x.__name__}' for x in np.typeNA.keys()])
+        return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]' 
+    else:
+        print("What the type you talkin' bout?")
+        return NotImplementedError
+    
 
 def build_cname(name,ttype):
     if name=='NaN': name='nan1'
@@ -245,9 +287,9 @@ def build_sql_regex(name,ttype, source_name = 'c.content'):
     elif ttype=='type':
         return f'REGEXP_MATCH({source_name},\'{detect_type(name)}\' ) AS {build_cname(name,ttype)}' 
     
-    elif ttype in ['c_','newaxis']:
+    elif ttype in ['CClass','NoneType','PytestTester','RClass','PytestTester','bool','IndexExpression',
+    '_typedict','str','nd_grid','_Feature','dict']:
         return f'REGEXP_MATCH({source_name},\'{detect_misc(name)}\' ) AS {build_cname(name,ttype)}'  
-    
     else:
         raise NotImplementedError 
 
