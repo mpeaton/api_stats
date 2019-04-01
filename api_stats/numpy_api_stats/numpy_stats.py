@@ -187,7 +187,7 @@ def detect_fun(f):
     return  f'(np\.|numpy\.){f}\(\s?[A-Za-z0-9_.\(\)]*\s?\)'
 
 def detect_mod(m):
-    return f'(import\s+(numpy|np)\.{m}|from (numpy|np)\s+import\s+{m}|from\s+(numpy|np)\.?{m} import\s+[A-za-z0-9_.]+)'
+    return f'(import\s+numpy\.{m}|from\s+numpy\s+import\s+{m}|from\s+numpy\.?{m} import\s+[A-za-z0-9_.]+)'
 
 def detect_float(f):
     # if f.lower()=='nan':
@@ -272,7 +272,9 @@ def build_sql_regex(name,ttype, source_name = 'c.content'):
         return f'REGEXP_MATCH( {source_name},\'{detect_fun(name)}\' ) AS {build_cname(name,ttype)}' 
     
     elif ttype=='module':
-        return f'REGEXP_MATCH({source_name},\'{detect_mod(name)}\' ) AS {build_cname(name,ttype)}'
+        regex = detect_mod(name)
+        #import pdb; pdb.set_trace()
+        return f'REGEXP_MATCH({source_name},\'{regex}\' ) AS {build_cname(name,ttype)}'
     
     elif ttype=='float':
        # if name.lower()=='nan':import pdb;pdb.set_trace()
