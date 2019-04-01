@@ -17,7 +17,7 @@ def select(api,ttype):
         elif ttype=='builtin_function_or_method':
             return  [ (x[0],x[1].__name__) for x in api if x[1] is type(np.array)]
         elif ttype=='type':
-            return  [ (x[0],x[1].__name__) for x in api if x[1] is type(np.int8)] 
+            return  [ (x[0],x[1].__name__) for x in api if x[1] is type(np.int8)]
         else:
             return NotImplementedError
 
@@ -220,38 +220,43 @@ def detect_misc(f):
         return r'(np\.|numpy\.)r_\.(axis|concatenate\(|makemat\(|matrix|ndmin|trans1d]'
     elif f=='little_endian':
         return r'(from\s+numpy\s+import\s+little_endian|(numpy\.|np\.)little_endian)'
-    elif f in ['s_','index_expr']:
+    elif f in ['s_','index_exp']:
         return f'(np\.|numpy\.){f}(\.\(maketuple|\[\s?[0-9]?:[0-9]?:?[0-9]?\])'
     elif f in ['cast']:
         return f'(np\.|numpy\.){f}'
     elif f=='nbytes':
         bstring='|'.join([ x.__name__ for x in np.nbytes.keys() ])  
         return f'(np\.|numpy\.)nbytes\[\s?({bstring})\s?\]'
-    elif f in ['numarray','oldnumeric']:
+    elif f in ['numarray','oldnumeric','UFUNC_PYVALS_NAME']:
         return f'(np\.|numpy\.){f}'
     elif f in ['mgrid','ogrid']:
         return f'(np\.|numpy\.){f}\[\s?[0-9]\s?:\s?[0-9]\s?,\s?[0-9]\s?:\s?[0-9]\s?\]'
     elif f in ['print_function','absolute_import','division']:
         return f'(np\.|numpy\.){f}'
     elif f=='sctypeDict':
-        tstring='|'.join([ str(x) if type(x) is int else f'\'{x}\'' for x in np.sctypeDict.keys() ])
+        tstring='|'.join([ str(x) if type(x) is int else f'\\\'{x}\\\'' for x in np.sctypeDict.keys() ])
+        tstring = tstring.replace('?','\?')
+        import pdb;pdb.set_trace()
         return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]' 
     elif f=='sctypes': 
-        tstring='|'.join([ f'\'{x}\'' for x in np.sctypes.keys()])
+        tstring='|'.join([ f'\\\'{x}\\\'' for x in np.sctypes.keys()])
         return f'(np\.|numpy\.){f}\[\s?({tstring})\s?\]'
     elif f=='typeDict': 
-        tstring='|'.join([ str(x) if type(x) is int else f'\'{x}\'' for x in np.typeDict.keys() ])
+        tstring='|'.join([ str(x) if type(x) is int else f'\\\'{x}\\\'' for x in np.typeDict.keys() ])
         return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]'  
     elif f=='typecodes':
-        tstring='|'.join([ f'\'{x}\'' for x in np.typecodes.keys()])
+        tstring='|'.join([ f'\\\'{x}\\\'' for x in np.typecodes.keys()])
         return f'(np\.|numpy\.){f}\[\s?({tstring})\s?\]' 
     elif f=='sctypeNA': 
-        tstring='|'.join([ f'\'{x}\'' if type(x) is str else f'(np\.|numpy\.){x.__name__}' for x in np.sctypeNA.keys()])
+        tstring='|'.join([ f'\\\'{x}\\\'' if type(x) is str else f'(np\.|numpy\.){x.__name__}' for x in np.sctypeNA.keys()])
+        tstring = tstring.replace('?','\?')
         return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]' 
     elif f=='typeNA': 
-        tstring='|'.join([ f'\'{x}\'' if type(x) is str else f'(np\.|numpy\.){x.__name__}' for x in np.typeNA.keys()])
+        tstring='|'.join([ f'\\\'{x}\\\'' if type(x) is str else f'(np\.|numpy\.){x.__name__}' for x in np.typeNA.keys()])
+        tstring = tstring.replace('?','\?') 
         return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]' 
     else:
+        import pdb;pdb.set_trace()
         print("What the type you talkin' bout?")
         return NotImplementedError
     
@@ -314,13 +319,6 @@ if __name__ == '__main__':
     
     apq = API_QUERY_FACTORY(api)
     query = apq.query
-    # query = build_countAPIs(funlist=apq.funs,api_table=
-    #                         nest_table(
-    #                             build_numpyAPI_query(
-    #                                 funlist=apq.funs,content_table = nest_table(
-    #                                     build_py_content(content_table_name='[bigquery-public-data:github_repos.contents]',
-    #                                                     join=join_py(file_table = '[bigquery-public-data:github_repos.files]'))
-    #                                 ))))    
     
     with open('numpy_api_search.sql', 'w') as f: 
         f.write('#legacySQL\n')
