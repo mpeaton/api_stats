@@ -2,7 +2,11 @@ import re
 import pytest
 from numpy_api_stats.numpy_stats import detect_fun,detect_mod,detect_float,detect_int,detect_ufunc,detect_type,detect_misc
 
-@pytest.mark.parametrize('m,s',[('linalg','from numpy.linalg import svd'),('linalg','import numpy.linalg as')])
+@pytest.mark.parametrize('m,s',[
+('linalg','from numpy.linalg import svd'),
+('linalg','from np.linalg import svd'),
+('linalg','from np import linalg'),
+('linalg','import numpy.linalg as')])
 def test_mod(m,s):
     assert(re.match(detect_mod(m),s))
   

@@ -36,7 +36,7 @@ class API_QUERY_FACTORY:
     
     _typelist = ['module','function','float','int','ufunc','builtin_function_or_method',
     'type','CClass','NoneType','PytestTester','RClass','bool','IndexExpression','_typedict',
-    'str','nd_grid','_Feature','float','dict']
+    'str','nd_grid','_Feature','dict']
     
     _api = [(x, type(np.__getattribute__(x))) for x in dir(np) if not x.startswith('__')] 
    
@@ -187,7 +187,7 @@ def detect_fun(f):
     return  f'(np\.|numpy\.){f}\(\s?[A-Za-z0-9_.\(\)]*\s?\)'
 
 def detect_mod(m):
-    return f'(import\s+numpy\.|from numpy\.{m}\s+'+'import\s+[a-zA-Z0-9_]+)'
+    return f'(import\s+(numpy|np)\.{m}|from (numpy|np)\s+import\s+{m}|from\s+(numpy|np)\.?{m} import\s+[A-za-z0-9_.]+)'
 
 def detect_float(f):
     # if f.lower()=='nan':
@@ -236,7 +236,6 @@ def detect_misc(f):
     elif f=='sctypeDict':
         tstring='|'.join([ str(x) if type(x) is int else f'\\\'{x}\\\'' for x in np.sctypeDict.keys() ])
         tstring = tstring.replace('?','\?')
-        import pdb;pdb.set_trace()
         return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]' 
     elif f=='sctypes': 
         tstring='|'.join([ f'\\\'{x}\\\'' for x in np.sctypes.keys()])
@@ -256,7 +255,6 @@ def detect_misc(f):
         tstring = tstring.replace('?','\?') 
         return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]' 
     else:
-        import pdb;pdb.set_trace()
         print("What the type you talkin' bout?")
         return NotImplementedError
     
