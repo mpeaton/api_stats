@@ -1,8 +1,7 @@
-from google.cloud import bigquery
 import numpy as np
 from pandas import read_csv as pd_read_csv
 from pandas import DataFrame
-
+from google.cloud import bigquery
 def select(api,ttype):
         if ttype=='function':
             return [(x[0],x[1].__name__) for x in api if x[1] is type(lambda x: x)]
@@ -63,7 +62,7 @@ class API_QUERY_FACTORY:
                         build_py_content(content_table_name=self.content_table,
                         join=join_py(file_table = self.file_table))
                                      )) 
-
+        self.count_query = build_countAPIs(api_list,api_table='[apt-footing-235018.NumpyAPI.ohNulllllll]')
 
 def groupby(x):
     y = {}
@@ -131,13 +130,13 @@ def print_results(job):
 #     else:
 #         return 'this'
 
-def plot_results(results,filename='results.svg'):
+def plot_results(results,savefig=False,filename='results.png',dpi=250):
     import matplotlib.pyplot as plt; plt.rcdefaults()
     import matplotlib.pyplot as plt
     
     r = results.T
     r2 = r.loc[r[0]>0].sort_values(0,ascending=False)
-    r2.index = [ f.split('_')[1] for f in list(r2.index)]
+    r2.index = [ f.split('_')[-2] for f in list(r2.index)]
 
     r2 = r2[:100]
     y_pos = np.arange(len(r2))
@@ -148,10 +147,12 @@ def plot_results(results,filename='results.svg'):
     plt.ylabel('Calls')
     plt.title('API calls from github query')
 
-    fig1 = plt.gcf() 
+    if savefig:
+        fig1 = plt.gcf() 
+        fig1.savefig(filename, dpi=dpi)
+    
     plt.show()
 
-    fig1.savefig(filename, dpi=500)
 
 def build_getAPItable_query():
     return '''
@@ -187,7 +188,7 @@ def detect_fun(f):
     return  f'(np\.|numpy\.){f}\(\s?[A-Za-z0-9_.\(\)]*\s?\)'
 
 def detect_mod(m):
-    return f'(import\s+numpy\.{m}|from\s+numpy\s+import\s+{m}|from\s+numpy\.?{m} import\s+[A-za-z0-9_.]+)'
+    return f'(import\s+numpy\.{m}|from\s+numpy\s+import\s+{m}|from\s+numpy\.{m} import\s+[A-za-z0-9_.]+)'
 
 def detect_float(f):
     # if f.lower()=='nan':
@@ -211,13 +212,13 @@ def detect_type(f):
 
 def detect_misc(f):
     if f=='c_':
-        return r'(np\.|numpy\.)c_\.(axis|concatenate\(|makemat\(|matrix|ndmin|trans1d]'
+        return r'(np\.|numpy\.)c_\.(axis|concatenate\(|makemat\(|matrix|ndmin|trans1d)'
     elif f=='newaxis':
         return r'(np\.|numpy\.)newaxis'
     elif f=='test':
         return r'(np\.|numpy\.)test\('
     elif f=='r_':
-        return r'(np\.|numpy\.)r_\.(axis|concatenate\(|makemat\(|matrix|ndmin|trans1d]'
+        return r'(np\.|numpy\.)r_\.(axis|concatenate\(|makemat\(|matrix|ndmin|trans1d)'
     elif f=='little_endian':
         return r'(from\s+numpy\s+import\s+little_endian|(numpy\.|np\.)little_endian)'
     elif f in ['s_','index_exp']:
@@ -235,7 +236,7 @@ def detect_misc(f):
         return f'(np\.|numpy\.){f}'
     elif f=='sctypeDict':
         tstring='|'.join([ str(x) if type(x) is int else f'\\\'{x}\\\'' for x in np.sctypeDict.keys() ])
-        tstring = tstring.replace('?','\?')
+       # tstring = tstring.replace('?','\?')
         return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]' 
     elif f=='sctypes': 
         tstring='|'.join([ f'\\\'{x}\\\'' for x in np.sctypes.keys()])
@@ -269,32 +270,47 @@ def build_cname(name,ttype):
 
 def build_sql_regex(name,ttype, source_name = 'c.content'):
     if ttype=='function':
-        return f'REGEXP_MATCH( {source_name},\'{detect_fun(name)}\' ) AS {build_cname(name,ttype)}' 
+        regex = detect_fun(name)
+        regex = regex.replace('\\','\\\\')
+        return f'REGEXP_MATCH( {source_name},\'{regex}\' ) AS {build_cname(name,ttype)}' 
     
     elif ttype=='module':
         regex = detect_mod(name)
+        regex = regex.replace('\\','\\\\')
         #import pdb; pdb.set_trace()
         return f'REGEXP_MATCH({source_name},\'{regex}\' ) AS {build_cname(name,ttype)}'
     
     elif ttype=='float':
+        regex = detect_float(name)
+        regex = regex.replace('\\','\\\\')
        # if name.lower()=='nan':import pdb;pdb.set_trace()
-        return f'REGEXP_MATCH({source_name},\'{detect_float(name)}\' ) AS {build_cname(name,ttype)}'
+        return f'REGEXP_MATCH({source_name},\'{regex}\' ) AS {build_cname(name,ttype)}'
     
     elif ttype=='int':
-        return f'REGEXP_MATCH({source_name},\'{detect_int(name)}\' ) AS {build_cname(name,ttype)}'
+        regex = detect_int(name)
+        regex = regex.replace('\\','\\\\')
+        return f'REGEXP_MATCH({source_name},\'{regex}\' ) AS {build_cname(name,ttype)}'
 
     elif ttype=='ufunc':
-        return f'REGEXP_MATCH({source_name},\'{detect_ufunc(name)}\' ) AS {build_cname(name,ttype)}'
+        regex = detect_ufunc(name)
+        regex = regex.replace('\\','\\\\')
+        return f'REGEXP_MATCH({source_name},\'{regex}\' ) AS {build_cname(name,ttype)}'
     
     elif ttype=='builtin_function_or_method':
-        return f'REGEXP_MATCH({source_name},\'{detect_builtin(name)}\' ) AS {build_cname(name,ttype)}' 
+        regex = detect_builtin(name)
+        regex = regex.replace('\\','\\\\')
+        return f'REGEXP_MATCH({source_name},\'{regex}\' ) AS {build_cname(name,ttype)}' 
     
     elif ttype=='type':
-        return f'REGEXP_MATCH({source_name},\'{detect_type(name)}\' ) AS {build_cname(name,ttype)}' 
+        regex = detect_type(name)
+        regex = regex.replace('\\','\\\\')
+        return f'REGEXP_MATCH({source_name},\'{regex}\' ) AS {build_cname(name,ttype)}' 
     
     elif ttype in ['CClass','NoneType','PytestTester','RClass','PytestTester','bool','IndexExpression',
     '_typedict','str','nd_grid','_Feature','dict']:
-        return f'REGEXP_MATCH({source_name},\'{detect_misc(name)}\' ) AS {build_cname(name,ttype)}'  
+        regex = detect_misc(name)
+        regex = regex.replace('\\','\\\\')
+        return f'REGEXP_MATCH({source_name},\'{regex}\' ) AS {build_cname(name,ttype)}'  
     else:
         raise NotImplementedError 
 
@@ -308,7 +324,7 @@ def build_numpyAPI_query(api_list, content_table = '[bigquery-public-data:github
 
 
 def build_countAPIs(api_list,api_table='None'):
-    return 'SELECT\n'+',\n'.join([f'count(CASE WHEN numpy_{f} THEN 1 END) AS {f}_count' for f in api_list]) + f'\nFROM {api_table}'
+    return 'SELECT\n'+',\n'.join([f'count(CASE WHEN {build_cname(*f)} THEN 1 END) AS {build_cname(*f)}_count' for f in api_list]) + f'\nFROM {api_table}'
 
 if __name__ == '__main__':
    
@@ -318,9 +334,10 @@ if __name__ == '__main__':
     api = [(x, type(np.__getattribute__(x))) for x in dir(np) if not x.startswith('__')] 
     
     apq = API_QUERY_FACTORY(api)
-    query = apq.query
     
     with open('numpy_api_search.sql', 'w') as f: 
         f.write('#legacySQL\n')
-        f.write(query) 
-
+        f.write(apq.query) 
+    with open('numpy_api_count.sql','w') as f:
+        f.write('#legacySQL\n')
+        f.write(apq.count_query)

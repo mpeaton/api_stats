@@ -4,9 +4,8 @@ from numpy_api_stats.numpy_stats import detect_fun,detect_mod,detect_float,detec
 
 @pytest.mark.parametrize('m,s',[
 ('linalg','from numpy.linalg import svd'),
-('linalg','from np.linalg import svd'),
-('linalg','from np import linalg'),
-('linalg','import numpy.linalg as')])
+('linalg','from numpy import linalg'),
+('linalg','import numpy.linalg as linalg')])
 def test_mod(m,s):
     assert(re.match(detect_mod(m),s))
   
@@ -33,7 +32,7 @@ def test_type(f,s):
     assert(re.search(detect_type(f),s))
     
 @pytest.mark.parametrize('f,s',[('s_','np.s_[0:9]'),('mgrid', 'np.mgrid[0:5,0:5]'),('sctypeDict','np.sctypeDict[\'intp\']'),
-    ('sctypeDict','np.sctypeDict[\'?\']'),('sctypes','np.sctypes[\'complex\' ]'),
+    ('sctypeDict','np.sctypeDict[\'?\']'),('sctypeDict','np.sctypeDict[\'bool\']'),('sctypes','np.sctypes[\'complex\' ]'),
       ('sctypeNA','np.sctypeNA[np.uint32]'),('typeNA','np.typeNA[\'?\']'),('typeNA','np.typeNA[ \'Bool\']')])
 def test_misc(f,s):
     assert(re.search(detect_misc(f),s))
