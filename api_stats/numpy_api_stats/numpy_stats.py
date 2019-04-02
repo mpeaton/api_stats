@@ -150,7 +150,6 @@ def plot_results(results,savefig=False,filename='results.png',dpi=250):
     if savefig:
         fig1 = plt.gcf() 
         fig1.savefig(filename, dpi=dpi)
-    
     plt.show()
 
 
@@ -183,7 +182,10 @@ def get_numpyAPI_function_list(client):
     df = query_job.result().to_dataframe()
     return [r[1][0] for r in df.iterrows()]
 
-
+# The vast majority of numpy imports are as np.  As such the following detectors are predicated on that namespace.
+# Lookahead and Lookbehind regex may be used to reduce false negatives, however counts of module import should at
+# be correct.  (
+# https://medium.com/google-cloud/naming-conventions-in-python-import-statements-a-bigquery-adventure-using-the-github-db-dump-d900159ab680]
 def detect_fun(f):
     return  f'(np\.|numpy\.){f}\(\s?[A-Za-z0-9_.\(\)]*\s?\)'
 
