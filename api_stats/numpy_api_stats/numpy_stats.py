@@ -342,7 +342,9 @@ def build_numpyAPI_query(api_list, content_table = '[bigquery-public-data:github
     source_name = 'c.content'
     for f in api_list:
         qlist.append(build_sql_regex(f[0],f[1]))
-    
+
+    #prepend the repo_name and path for key information
+    qlist = ['repo_name','path'] + qlist 
     return '\n'.join(['SELECT',',\n'.join(qlist),f'FROM {content_table}'])
 
 

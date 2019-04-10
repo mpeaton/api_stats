@@ -1,5 +1,7 @@
 #legacySQL
 SELECT
+repo_name,
+path,
 REGEXP_MATCH(c.content,'(import\\s+numpy\\._distributor_init|from\\s+numpy\\s+import\\s+_distributor_init|from\\s+numpy\\._distributor_init import\\s+[A-za-z0-9_.]+)' ) AS numpy_module__distributor_init,
 REGEXP_MATCH(c.content,'(import\\s+numpy\\._globals|from\\s+numpy\\s+import\\s+_globals|from\\s+numpy\\._globals import\\s+[A-za-z0-9_.]+)' ) AS numpy_module__globals,
 REGEXP_MATCH(c.content,'(import\\s+numpy\\._import_tools|from\\s+numpy\\s+import\\s+_import_tools|from\\s+numpy\\._import_tools import\\s+[A-za-z0-9_.]+)' ) AS numpy_module__import_tools,
