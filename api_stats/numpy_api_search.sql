@@ -24,6 +24,7 @@ REGEXP_MATCH(c.content,'(import\\s+numpy\\.sys|from\\s+numpy\\s+import\\s+sys|fr
 REGEXP_MATCH(c.content,'(import\\s+numpy\\.testing|from\\s+numpy\\s+import\\s+testing|from\\s+numpy\\.testing import\\s+[A-za-z0-9_.]+)' ) AS numpy_module_testing,
 REGEXP_MATCH(c.content,'(import\\s+numpy\\.version|from\\s+numpy\\s+import\\s+version|from\\s+numpy\\.version import\\s+[A-za-z0-9_.]+)' ) AS numpy_module_version,
 REGEXP_MATCH(c.content,'(import\\s+numpy\\.warnings|from\\s+numpy\\s+import\\s+warnings|from\\s+numpy\\.warnings import\\s+[A-za-z0-9_.]+)' ) AS numpy_module_warnings,
+REGEXP_MATCH(c.content,'import\\s+numpy' ) AS numpy_module_numpy,
 REGEXP_MATCH( c.content,'(np\\.|numpy\\.)add_newdoc\\(\\s?[A-Za-z0-9_.\\(\\)]*\\s?\\)' ) AS numpy_function_add_newdoc,
 REGEXP_MATCH( c.content,'(np\\.|numpy\\.)alen\\(\\s?[A-Za-z0-9_.\\(\\)]*\\s?\\)' ) AS numpy_function_alen,
 REGEXP_MATCH( c.content,'(np\\.|numpy\\.)all\\(\\s?[A-Za-z0-9_.\\(\\)]*\\s?\\)' ) AS numpy_function_all,
@@ -600,19 +601,19 @@ REGEXP_MATCH(c.content,'(np\\.|numpy\\.)ogrid\\[\\s?[0-9]\\s?:\\s?[0-9]\\s?,\\s?
 REGEXP_MATCH(c.content,'(np\\.|numpy\\.)absolute_import' ) AS numpy__Feature_absolute_import,
 REGEXP_MATCH(c.content,'(np\\.|numpy\\.)division' ) AS numpy__Feature_division,
 REGEXP_MATCH(c.content,'(np\\.|numpy\\.)print_function' ) AS numpy__Feature_print_function,
-REGEXP_MATCH(c.content,'(np\\.|numpy\\.)sctypeDict\\[\\s?\\'?\\'|0|\\'byte\\'|\\'b\\'|1|\\'ubyte\\'|\\'B\\'|2|\\'short\\'|\\'h\\'|3|\\'ushort\\'|\\'H\\'|4|\\'i\\'|5|\\'uint\\'|\\'I\\'|6|\\'intp\\'|\\'p\\'|7|\\'uintp\\'|\\'P\\'|8|\\'long\\'|\\'l\\'|\\'L\\'|\\'longlong\\'|\\'q\\'|9|\\'ulonglong\\'|\\'Q\\'|10|\\'half\\'|\\'e\\'|23|\\'f\\'|11|\\'double\\'|\\'d\\'|12|\\'longdouble\\'|\\'g\\'|13|\\'cfloat\\'|\\'F\\'|14|\\'cdouble\\'|\\'D\\'|15|\\'clongdouble\\'|\\'G\\'|16|\\'O\\'|17|\\'S\\'|18|\\'unicode\\'|\\'U\\'|19|\\'void\\'|\\'V\\'|20|\\'M\\'|21|\\'m\\'|22|\\'bool8\\'|\\'Bool\\'|\\'b1\\'|\\'float16\\'|\\'Float16\\'|\\'f2\\'|\\'float32\\'|\\'Float32\\'|\\'f4\\'|\\'float64\\'|\\'Float64\\'|\\'f8\\'|\\'float128\\'|\\'Float128\\'|\\'f16\\'|\\'complex64\\'|\\'Complex32\\'|\\'c8\\'|\\'complex128\\'|\\'Complex64\\'|\\'c16\\'|\\'complex256\\'|\\'Complex128\\'|\\'c32\\'|\\'object0\\'|\\'Object0\\'|\\'bytes0\\'|\\'Bytes0\\'|\\'str0\\'|\\'Str0\\'|\\'void0\\'|\\'Void0\\'|\\'datetime64\\'|\\'Datetime64\\'|\\'M8\\'|\\'timedelta64\\'|\\'Timedelta64\\'|\\'m8\\'|\\'int64\\'|\\'Int64\\'|\\'i8\\'|\\'uint64\\'|\\'UInt64\\'|\\'u8\\'|\\'int32\\'|\\'Int32\\'|\\'i4\\'|\\'uint32\\'|\\'UInt32\\'|\\'u4\\'|\\'int16\\'|\\'Int16\\'|\\'i2\\'|\\'uint16\\'|\\'UInt16\\'|\\'u2\\'|\\'int8\\'|\\'Int8\\'|\\'i1\\'|\\'uint8\\'|\\'UInt8\\'|\\'u1\\'|\\'complex_\\'|\\'int0\\'|\\'uint0\\'|\\'single\\'|\\'csingle\\'|\\'singlecomplex\\'|\\'float_\\'|\\'intc\\'|\\'uintc\\'|\\'int_\\'|\\'longfloat\\'|\\'clongfloat\\'|\\'longcomplex\\'|\\'bool_\\'|\\'unicode_\\'|\\'object_\\'|\\'bytes_\\'|\\'str_\\'|\\'string_\\'|\\'int\\'|\\'float\\'|\\'complex\\'|\\'bool\\'|\\'object\\'|\\'str\\'|\\'bytes\\'|\\'a\\'\\s?\\]' ) AS numpy_dict_sctypeDict,
-REGEXP_MATCH(c.content,'(np\\.|numpy\\.)sctypeNA\\[\\s?\\'Bool\\'|(np\\.|numpy\\.)bool_|\\'\\?\\'|\\'b1\\'|\\'Float16\\'|(np\\.|numpy\\.)float16|\\'e\\'|\\'f2\\'|\\'Float32\\'|(np\\.|numpy\\.)float32|\\'f\\'|\\'f4\\'|\\'Float64\\'|(np\\.|numpy\\.)float64|\\'d\\'|\\'f8\\'|\\'Float128\\'|(np\\.|numpy\\.)float128|\\'g\\'|\\'f16\\'|\\'Complex32\\'|(np\\.|numpy\\.)complex64|\\'F\\'|\\'c8\\'|\\'Complex64\\'|(np\\.|numpy\\.)complex128|\\'D\\'|\\'c16\\'|\\'Complex128\\'|(np\\.|numpy\\.)complex256|\\'G\\'|\\'c32\\'|\\'Object0\\'|(np\\.|numpy\\.)object_|\\'O\\'|\\'Bytes0\\'|(np\\.|numpy\\.)bytes_|\\'S\\'|\\'Str0\\'|(np\\.|numpy\\.)str_|\\'U\\'|\\'Void0\\'|(np\\.|numpy\\.)void|\\'V\\'|\\'Datetime64\\'|(np\\.|numpy\\.)datetime64|\\'M\\'|\\'M8\\'|\\'Timedelta64\\'|(np\\.|numpy\\.)timedelta64|\\'m\\'|\\'m8\\'|\\'Int64\\'|\\'i8\\'|(np\\.|numpy\\.)int64|\\'l\\'|\\'UInt64\\'|\\'u8\\'|(np\\.|numpy\\.)uint64|\\'L\\'|(np\\.|numpy\\.)int64|\\'q\\'|(np\\.|numpy\\.)uint64|\\'Q\\'|\\'Int32\\'|\\'i4\\'|(np\\.|numpy\\.)int32|\\'i\\'|\\'UInt32\\'|\\'u4\\'|(np\\.|numpy\\.)uint32|\\'I\\'|\\'Int16\\'|\\'i2\\'|(np\\.|numpy\\.)int16|\\'h\\'|\\'UInt16\\'|\\'u2\\'|(np\\.|numpy\\.)uint16|\\'H\\'|\\'Int8\\'|\\'i1\\'|(np\\.|numpy\\.)int8|\\'b\\'|\\'UInt8\\'|\\'u1\\'|(np\\.|numpy\\.)uint8|\\'B\\'\\s?\\]' ) AS numpy_dict_sctypeNA,
-REGEXP_MATCH(c.content,'(np\\.|numpy\\.)sctypes\\[\\s?(\\'int\\'|\\'uint\\'|\\'float\\'|\\'complex\\'|\\'others\\')\\s?\\]' ) AS numpy_dict_sctypes,
-REGEXP_MATCH(c.content,'(np\\.|numpy\\.)typeDict\\[\\s?\\'?\\'|0|\\'byte\\'|\\'b\\'|1|\\'ubyte\\'|\\'B\\'|2|\\'short\\'|\\'h\\'|3|\\'ushort\\'|\\'H\\'|4|\\'i\\'|5|\\'uint\\'|\\'I\\'|6|\\'intp\\'|\\'p\\'|7|\\'uintp\\'|\\'P\\'|8|\\'long\\'|\\'l\\'|\\'L\\'|\\'longlong\\'|\\'q\\'|9|\\'ulonglong\\'|\\'Q\\'|10|\\'half\\'|\\'e\\'|23|\\'f\\'|11|\\'double\\'|\\'d\\'|12|\\'longdouble\\'|\\'g\\'|13|\\'cfloat\\'|\\'F\\'|14|\\'cdouble\\'|\\'D\\'|15|\\'clongdouble\\'|\\'G\\'|16|\\'O\\'|17|\\'S\\'|18|\\'unicode\\'|\\'U\\'|19|\\'void\\'|\\'V\\'|20|\\'M\\'|21|\\'m\\'|22|\\'bool8\\'|\\'Bool\\'|\\'b1\\'|\\'float16\\'|\\'Float16\\'|\\'f2\\'|\\'float32\\'|\\'Float32\\'|\\'f4\\'|\\'float64\\'|\\'Float64\\'|\\'f8\\'|\\'float128\\'|\\'Float128\\'|\\'f16\\'|\\'complex64\\'|\\'Complex32\\'|\\'c8\\'|\\'complex128\\'|\\'Complex64\\'|\\'c16\\'|\\'complex256\\'|\\'Complex128\\'|\\'c32\\'|\\'object0\\'|\\'Object0\\'|\\'bytes0\\'|\\'Bytes0\\'|\\'str0\\'|\\'Str0\\'|\\'void0\\'|\\'Void0\\'|\\'datetime64\\'|\\'Datetime64\\'|\\'M8\\'|\\'timedelta64\\'|\\'Timedelta64\\'|\\'m8\\'|\\'int64\\'|\\'Int64\\'|\\'i8\\'|\\'uint64\\'|\\'UInt64\\'|\\'u8\\'|\\'int32\\'|\\'Int32\\'|\\'i4\\'|\\'uint32\\'|\\'UInt32\\'|\\'u4\\'|\\'int16\\'|\\'Int16\\'|\\'i2\\'|\\'uint16\\'|\\'UInt16\\'|\\'u2\\'|\\'int8\\'|\\'Int8\\'|\\'i1\\'|\\'uint8\\'|\\'UInt8\\'|\\'u1\\'|\\'complex_\\'|\\'int0\\'|\\'uint0\\'|\\'single\\'|\\'csingle\\'|\\'singlecomplex\\'|\\'float_\\'|\\'intc\\'|\\'uintc\\'|\\'int_\\'|\\'longfloat\\'|\\'clongfloat\\'|\\'longcomplex\\'|\\'bool_\\'|\\'unicode_\\'|\\'object_\\'|\\'bytes_\\'|\\'str_\\'|\\'string_\\'|\\'int\\'|\\'float\\'|\\'complex\\'|\\'bool\\'|\\'object\\'|\\'str\\'|\\'bytes\\'|\\'a\\'\\s?\\]' ) AS numpy_dict_typeDict,
-REGEXP_MATCH(c.content,'(np\\.|numpy\\.)typeNA\\[\\s?\\'Bool\\'|(np\\.|numpy\\.)bool_|\\'\\?\\'|\\'b1\\'|\\'Float16\\'|(np\\.|numpy\\.)float16|\\'e\\'|\\'f2\\'|\\'Float32\\'|(np\\.|numpy\\.)float32|\\'f\\'|\\'f4\\'|\\'Float64\\'|(np\\.|numpy\\.)float64|\\'d\\'|\\'f8\\'|\\'Float128\\'|(np\\.|numpy\\.)float128|\\'g\\'|\\'f16\\'|\\'Complex32\\'|(np\\.|numpy\\.)complex64|\\'F\\'|\\'c8\\'|\\'Complex64\\'|(np\\.|numpy\\.)complex128|\\'D\\'|\\'c16\\'|\\'Complex128\\'|(np\\.|numpy\\.)complex256|\\'G\\'|\\'c32\\'|\\'Object0\\'|(np\\.|numpy\\.)object_|\\'O\\'|\\'Bytes0\\'|(np\\.|numpy\\.)bytes_|\\'S\\'|\\'Str0\\'|(np\\.|numpy\\.)str_|\\'U\\'|\\'Void0\\'|(np\\.|numpy\\.)void|\\'V\\'|\\'Datetime64\\'|(np\\.|numpy\\.)datetime64|\\'M\\'|\\'M8\\'|\\'Timedelta64\\'|(np\\.|numpy\\.)timedelta64|\\'m\\'|\\'m8\\'|\\'Int64\\'|\\'i8\\'|(np\\.|numpy\\.)int64|\\'l\\'|\\'UInt64\\'|\\'u8\\'|(np\\.|numpy\\.)uint64|\\'L\\'|(np\\.|numpy\\.)int64|\\'q\\'|(np\\.|numpy\\.)uint64|\\'Q\\'|\\'Int32\\'|\\'i4\\'|(np\\.|numpy\\.)int32|\\'i\\'|\\'UInt32\\'|\\'u4\\'|(np\\.|numpy\\.)uint32|\\'I\\'|\\'Int16\\'|\\'i2\\'|(np\\.|numpy\\.)int16|\\'h\\'|\\'UInt16\\'|\\'u2\\'|(np\\.|numpy\\.)uint16|\\'H\\'|\\'Int8\\'|\\'i1\\'|(np\\.|numpy\\.)int8|\\'b\\'|\\'UInt8\\'|\\'u1\\'|(np\\.|numpy\\.)uint8|\\'B\\'\\s?\\]' ) AS numpy_dict_typeNA,
-REGEXP_MATCH(c.content,'(np\\.|numpy\\.)typecodes\\[\\s?(\\'Character\\'|\\'Integer\\'|\\'UnsignedInteger\\'|\\'Float\\'|\\'Complex\\'|\\'AllInteger\\'|\\'AllFloat\\'|\\'Datetime\\'|\\'All\\')\\s?\\]' ) AS numpy_dict_typecodes
+REGEXP_MATCH(c.content,'(np\\.|numpy\\.)sctypeDict\\[' ) AS numpy_dict_sctypeDict,
+REGEXP_MATCH(c.content,'(np\\.|numpy\\.)sctypeNA\\[' ) AS numpy_dict_sctypeNA,
+REGEXP_MATCH(c.content,'(np\\.|numpy\\.)sctypes\\[' ) AS numpy_dict_sctypes,
+REGEXP_MATCH(c.content,'(np\\.|numpy\\.)typeDict\\[' ) AS numpy_dict_typeDict,
+REGEXP_MATCH(c.content,'(np\\.|numpy\\.)typeNA\\[' ) AS numpy_dict_typeNA,
+REGEXP_MATCH(c.content,'(np\\.|numpy\\.)typecodes\\[' ) AS numpy_dict_typecodes
 FROM (SELECT
-*
+c.id, content,binary,repo_name,path
 FROM
 [bigquery-public-data:github_repos.contents] AS c
 INNER JOIN
 (SELECT
-*
+repo_name, path, f.id
 FROM
 [bigquery-public-data:github_repos.files] AS f
 WHERE
@@ -620,6 +621,9 @@ WHERE
 f.path LIKE '%.py' 
 OR
 f.path LIKE '%.ipynb'
+OR
+f.path LIKE '%.pyx'
 ) ) AS p
 ON
-c.id = p.id)
+c.id = p.id
+WHERE binary = False)

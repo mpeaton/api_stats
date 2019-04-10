@@ -1,7 +1,7 @@
 import numpy as np
 from pandas import read_csv as pd_read_csv
 from pandas import DataFrame
-from google.cloud import bigquery
+#from google.cloud import bigquery
 def select(api,ttype):
         if ttype=='function':
             return [(x[0],x[1].__name__) for x in api if x[1] is type(lambda x: x)]
@@ -24,6 +24,10 @@ def build_api_list(api,typelist=['ufunc']):
     
 
     api_list = [(x[0],x[1].__name__) for x in api]
+
+    # Add main numpy module for nomalization
+    api_list.append(('numpy','module'))
+
     df_api = DataFrame(api_list,columns = ['label','type'])
 
     df_api.set_index('type',inplace=True)
@@ -62,7 +66,7 @@ class API_QUERY_FACTORY:
                         build_py_content(content_table_name=self.content_table,
                         join=join_py(file_table = self.file_table))
                                      )) 
-        self.count_query = build_countAPIs(api_list,api_table='[apt-footing-235018.NumpyAPI.ohNulllllll]')
+        self.count_query = build_countAPIs(api_list,api_table='[apt-footing-235018.NumpyAPI.latest_numpy]')
 
 def groupby(x):
     y = {}
@@ -165,17 +169,19 @@ def build_py_query(file_table = '[bigquery-public-data:github_repos.sample_files
 f.path LIKE '%.py' 
 OR
 f.path LIKE '%.ipynb'
+OR
+f.path LIKE '%.pyx'
 ) '''
-    return '\n'.join(['SELECT', '*', 'FROM',file_table + ' AS f','WHERE',w1string])
+    return '\n'.join(['SELECT', 'repo_name, path, f.id', 'FROM',file_table + ' AS f','WHERE',w1string])
 
 def nest_table(t):
     return '('+t+')'
 
 def build_py_content(content_table_name='[bigquery-public-data:github_repos.sample_contents]',join=''):
-    return '\n'.join(['SELECT','*','FROM',content_table_name + ' AS c',join])
+    return '\n'.join(['SELECT','c.id, content,binary,repo_name,path','FROM',content_table_name + ' AS c',join])
 
 def join_py(file_table = '[bigquery-public-data:github_repos.sample_files]'):
-    return '\n'.join(['INNER JOIN',nest_table(build_py_query(file_table = file_table))+' AS p','ON','c.id = p.id'])
+    return '\n'.join(['INNER JOIN',nest_table(build_py_query(file_table = file_table))+' AS p','ON','c.id = p.id','WHERE binary = False'])
 
 def get_numpyAPI_function_list(client):
     query_job = client.query( build_getAPItable_query() )  # API request
@@ -190,7 +196,10 @@ def detect_fun(f):
     return  f'(np\.|numpy\.){f}\(\s?[A-Za-z0-9_.\(\)]*\s?\)'
 
 def detect_mod(m):
-    return f'(import\s+numpy\.{m}|from\s+numpy\s+import\s+{m}|from\s+numpy\.{m} import\s+[A-za-z0-9_.]+)'
+    if m=='numpy':
+        return f'import\s+numpy'
+    else:
+        return f'(import\s+numpy\.{m}|from\s+numpy\s+import\s+{m}|from\s+numpy\.{m} import\s+[A-za-z0-9_.]+)'
 
 def detect_float(f):
     # if f.lower()=='nan':
@@ -237,26 +246,38 @@ def detect_misc(f):
     elif f in ['print_function','absolute_import','division']:
         return f'(np\.|numpy\.){f}'
     elif f=='sctypeDict':
-        tstring='|'.join([ str(x) if type(x) is int else f'\\\'{x}\\\'' for x in np.sctypeDict.keys() ])
+        #TODO FIX BETTER
+        return f'(np\.|numpy\.){f}\['
+        #tstring='|'.join([ str(x) if type(x) is int else f'\\\'{x}\\\'' for x in np.sctypeDict.keys() ])
        # tstring = tstring.replace('?','\?')
-        return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]' 
+        #return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]' 
     elif f=='sctypes': 
-        tstring='|'.join([ f'\\\'{x}\\\'' for x in np.sctypes.keys()])
-        return f'(np\.|numpy\.){f}\[\s?({tstring})\s?\]'
+        #TODO FIX BETTER
+        return f'(np\.|numpy\.){f}\['
+        #tstring='|'.join([ f'\\\'{x}\\\'' for x in np.sctypes.keys()])
+        #return f'(np\.|numpy\.){f}\[\s?({tstring})\s?\]'
     elif f=='typeDict': 
-        tstring='|'.join([ str(x) if type(x) is int else f'\\\'{x}\\\'' for x in np.typeDict.keys() ])
-        return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]'  
+        #TODO FIX BETTER
+        return f'(np\.|numpy\.){f}\['
+        #tstring='|'.join([ str(x) if type(x) is int else f'\\\'{x}\\\'' for x in np.typeDict.keys() ])
+        #return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]'  
     elif f=='typecodes':
-        tstring='|'.join([ f'\\\'{x}\\\'' for x in np.typecodes.keys()])
-        return f'(np\.|numpy\.){f}\[\s?({tstring})\s?\]' 
+        #TODO FIX BETTER
+        return f'(np\.|numpy\.){f}\['
+        #tstring='|'.join([ f'\\\'{x}\\\'' for x in np.typecodes.keys()])
+        #return f'(np\.|numpy\.){f}\[\s?({tstring})\s?\]' 
     elif f=='sctypeNA': 
-        tstring='|'.join([ f'\\\'{x}\\\'' if type(x) is str else f'(np\.|numpy\.){x.__name__}' for x in np.sctypeNA.keys()])
-        tstring = tstring.replace('?','\?')
-        return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]' 
+        #TODO FIX BETTER
+        return f'(np\.|numpy\.){f}\['
+        #tstring='|'.join([ f'\\\'{x}\\\'' if type(x) is str else f'(np\.|numpy\.){x.__name__}' for x in np.sctypeNA.keys()])
+        #tstring = tstring.replace('?','\?')
+        #return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]' 
     elif f=='typeNA': 
-        tstring='|'.join([ f'\\\'{x}\\\'' if type(x) is str else f'(np\.|numpy\.){x.__name__}' for x in np.typeNA.keys()])
-        tstring = tstring.replace('?','\?') 
-        return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]' 
+        #TODO FIX BETTER
+        return f'(np\.|numpy\.){f}\['
+        #tstring='|'.join([ f'\\\'{x}\\\'' if type(x) is str else f'(np\.|numpy\.){x.__name__}' for x in np.typeNA.keys()])
+        #tstring = tstring.replace('?','\?') 
+        #return f'(np\.|numpy\.){f}\[\s?{tstring}\s?\]'
     else:
         print("What the type you talkin' bout?")
         return NotImplementedError
