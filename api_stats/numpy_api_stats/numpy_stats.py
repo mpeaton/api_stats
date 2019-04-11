@@ -1,6 +1,7 @@
 import numpy as np
 from pandas import read_csv as pd_read_csv
 from pandas import DataFrame
+import matplotlib.pyplot as plt
 #from google.cloud import bigquery
 def select(api,ttype):
         if ttype=='function':
@@ -135,7 +136,7 @@ def print_results(job):
 #         return 'this'
 
 def plot_results(results,savefig=False,filename='results.png',dpi=250):
-    import matplotlib.pyplot as plt; plt.rcdefaults()
+#    import matplotlib.pyplot as plt; plt.rcdefaults()
     import matplotlib.pyplot as plt
     
     r = results.T
@@ -156,6 +157,18 @@ def plot_results(results,savefig=False,filename='results.png',dpi=250):
         fig1.savefig(filename, dpi=dpi)
     plt.show()
 
+def plot_bar_repo(df):
+    N=100
+    fig, ax = plt.subplots()
+    p=[]
+    for r in np.arange(len(df)):
+        rname = df.index[r]
+        p.append(ax.bar(np.arange(N),df.iloc[r,:N]*100,log=True))
+        ax.legend( p , df.index,loc=1)
+    plt.xticks(np.arange(N),[ f.split('_')[-2] for f in list(df.columns[:N])],rotation='vertical',fontsize=4)
+    plt.ylabel('log %')
+    plt.title('Percentage Numpy API Calls')
+    return fig
 
 def build_getAPItable_query():
     return '''

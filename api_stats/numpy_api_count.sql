@@ -24,6 +24,7 @@ count(CASE WHEN numpy_module_sys THEN 1 END) AS numpy_module_sys_count,
 count(CASE WHEN numpy_module_testing THEN 1 END) AS numpy_module_testing_count,
 count(CASE WHEN numpy_module_version THEN 1 END) AS numpy_module_version_count,
 count(CASE WHEN numpy_module_warnings THEN 1 END) AS numpy_module_warnings_count,
+count(CASE WHEN numpy_module_numpy THEN 1 END) AS numpy_module_numpy_count,
 count(CASE WHEN numpy_function_add_newdoc THEN 1 END) AS numpy_function_add_newdoc_count,
 count(CASE WHEN numpy_function_alen THEN 1 END) AS numpy_function_alen_count,
 count(CASE WHEN numpy_function_all THEN 1 END) AS numpy_function_all_count,
@@ -606,4 +607,4 @@ count(CASE WHEN numpy_dict_sctypes THEN 1 END) AS numpy_dict_sctypes_count,
 count(CASE WHEN numpy_dict_typeDict THEN 1 END) AS numpy_dict_typeDict_count,
 count(CASE WHEN numpy_dict_typeNA THEN 1 END) AS numpy_dict_typeNA_count,
 count(CASE WHEN numpy_dict_typecodes THEN 1 END) AS numpy_dict_typecodes_count
-FROM [apt-footing-235018.NumpyAPI.ohNulllllll]
+FROM [apt-footing-235018.NumpyAPI.latest_numpy]
