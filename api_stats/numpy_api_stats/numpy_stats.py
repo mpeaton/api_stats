@@ -379,3 +379,40 @@ if __name__ == '__main__':
     with open('numpy_api_count.sql','w') as f:
         f.write('#legacySQL\n')
         f.write(apq.count_query)
+
+
+def build_import_query():
+    """
+    Construct a first pass query to detect all of the numpy imports
+    """
+    #TODO: implement this or AST?j
+    pass
+
+def get_npcalls(tree):
+    import ast
+
+    
+    importfromlist = []
+    importlist = []
+    calllist = []
+    
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            if node.module=='numpy':
+                for n in node.names:
+                    importfromlist.append(n)
+        elif isinstance(node, ast.Import):
+            for n in node.names:
+                importlist.append(n)
+        elif isinstance(node,ast.Call):
+            if isinstance(node.func,ast.Attribute):
+                if node.func.attr in [ n.asname if n.asname else n.name for n in importfromlist ]:
+                    calllist.append(node.func.attr)
+                elif isinstance(node.func.value, ast.Name):
+                    if node.func.value.id in [ a.asname if a.asname else a.name for a in importlist]:
+                        calllist.append(node.func.value.id+'.'+node.func.attr)
+            elif isinstance(node.func,ast.Name):
+                if node.func.id in [ n.asname if n.asname else n.name for n in importfromlist ]:
+                    calllist.append(node.func.id)
+    return calllist
+
